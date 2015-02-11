@@ -3,10 +3,11 @@ package goxmeans
 import (
 	"bufio"
 	"fmt"
-	"github.com/bobhancock/gomatrix/matrix"
 	"math"
 	"os"
 	"testing"
+
+	"github.com/bobhancock/gomatrix/matrix"
 )
 
 var DATAPOINTS = matrix.MakeDenseMatrix([]float64{3.0, 2.0,
@@ -296,7 +297,7 @@ func TestFreeparams(t *testing.T) {
 func TestVariance(t *testing.T) {
 	var ed EuclidDist
 	// Model D
-	c := cluster{DATAPOINTS_D, CENTROIDS_D, 0}
+	c := cluster{DATAPOINTS_D, CENTROIDS_D, nil, 0}
 	v := variance(c, ed)
 
 	E := 20.571429
@@ -309,7 +310,7 @@ func TestVariance(t *testing.T) {
 	}
 
 	// Variance a cluster with a perfectly centered centroids
-	c0 := cluster{DATAPOINTS_D0, CENTROID_D0, 0}
+	c0 := cluster{DATAPOINTS_D0, CENTROID_D0, nil, 0}
 	v0 := variance(c0, ed)
 
 	E = 1.333333
@@ -326,7 +327,7 @@ func TestLogLikelih(t *testing.T) {
 	R, _ := DATAPOINTS_D.GetSize()
 	var ed EuclidDist
 
-	cd := cluster{DATAPOINTS_D, CENTROIDS_D, 0}
+	cd := cluster{DATAPOINTS_D, CENTROIDS_D, nil, 0}
 	vard := variance(cd, ed)
 	cd.Variance = vard
 
@@ -345,11 +346,11 @@ func TestLogLikelih(t *testing.T) {
 	}
 
 	// Model Dn - two clusters
-	c0 := cluster{DATAPOINTS_D0, CENTROID_D0, 0}
+	c0 := cluster{DATAPOINTS_D0, CENTROID_D0, nil, 0}
 	v0 := variance(c0, ed)
 	c0.Variance = v0
 
-	c1 := cluster{DATAPOINTS_D1, CENTROID_D1, 0}
+	c1 := cluster{DATAPOINTS_D1, CENTROID_D1, nil, 0}
 	v1 := variance(c1, ed)
 	c1.Variance = v1
 
@@ -399,7 +400,7 @@ func TestBic(t *testing.T) {
 	numparams := freeparams(K, M)
 	var ed EuclidDist
 
-	c := cluster{DATAPOINTS_D, CENTROIDS_D, 0}
+	c := cluster{DATAPOINTS_D, CENTROIDS_D, nil, 0}
 	vard := variance(c, ed)
 	c.Variance = vard
 
@@ -413,11 +414,11 @@ func TestBic(t *testing.T) {
 	K = 1
 	numparamsn := freeparams(K, M)
 
-	c0 := cluster{DATAPOINTS_D0, CENTROID_D0, 0}
+	c0 := cluster{DATAPOINTS_D0, CENTROID_D0, nil, 0}
 	var0 := variance(c0, ed)
 	c0.Variance = var0
 
-	c1 := cluster{DATAPOINTS_D1, CENTROID_D1, 0}
+	c1 := cluster{DATAPOINTS_D1, CENTROID_D1, nil, 0}
 	var1 := variance(c1, ed)
 	c1.Variance = var1
 
@@ -436,7 +437,7 @@ func TestCalcbic(t *testing.T) {
 	var ed EuclidDist
 	R, M := DATAPOINTS_D.GetSize()
 
-	c := cluster{DATAPOINTS_D, CENTROIDS_D, 0}
+	c := cluster{DATAPOINTS_D, CENTROIDS_D, nil, 0}
 	vard := variance(c, ed)
 	c.Variance = vard
 	cslice := []cluster{c}
@@ -462,9 +463,9 @@ func TestXmeans(t *testing.T) {
 	centroids := cc.ChooseCentroids(DATAPOINTS_D, k)
 	cpts, _ := DATAPOINTS_D.GetSize()
 
-	models, errs := Xmeans(DATAPOINTS_D, centroids, k, kmax, cc, bisectcc, ed)
-	if len(errs) > 0 {
-		t.Errorf("TestXmeans: errs=%v", errs)
+	models, err := Xmeans(DATAPOINTS_D, centroids, k, kmax, cc, bisectcc, ed)
+	if err != nil {
+		t.Errorf("TestXmeans: err=%v", err)
 	}
 
 	for i, m := range models {

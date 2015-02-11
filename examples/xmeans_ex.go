@@ -8,14 +8,14 @@ the working directory.  The data is only two dimensions for this example.
 package main
 
 import (
-	"fmt"
-	"github.com/bobhancock/goxmeans"
-	"os"
 	"flag"
-	"runtime/pprof"
+	"fmt"
 	"log"
+	"os"
+	"runtime/pprof"
 	"strconv"
-	"math"
+
+	"github.com/bobhancock/goxmeans"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -27,7 +27,7 @@ func main() {
 		fmt.Println(usage)
 		return
 	}
-	
+
 	k, err := strconv.Atoi(os.Args[1])
 	if err != nil {
 		fmt.Printf("Could not convert arg %s to int.\n", os.Args[1])
@@ -46,13 +46,13 @@ func main() {
 	}
 
 	flag.Parse()
-    if *cpuprofile != "" {
-        f, err := os.Create(*cpuprofile)
-        if err != nil {
-            log.Fatal(err)
-        }
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
 		pprof.StartCPUProfile(f)
-        defer pprof.StopCPUProfile()
+		defer pprof.StopCPUProfile()
 	}
 
 	// Load data set.
@@ -63,40 +63,17 @@ func main() {
 	}
 	fmt.Println("Load complete")
 
-	// Type of data measurement between points.
-	var measurer goxmeans.EuclidDist
-
-	// How to select your initial centroids.
-	var cc goxmeans.DataCentroids
-
-	// How to select centroids for bisection.
-	bisectcc := goxmeans.EllipseCentroids{1.0}
-
-	// Initial matrix of centroids to use
-	centroids := cc.ChooseCentroids(data, k)
-
-	models, errs := goxmeans.Xmeans(data, centroids, k, kmax, cc, bisectcc, measurer)
-	if len(errs) > 0 {
-		for k, v := range errs {
-			fmt.Printf("%s: %v\n", k, v)
-		}
+	model, err := goxmeans.BestXmeans(data, k, kmax)
+	if err != nil {
+		fmt.Println("BestXmeans:", err)
 		return
 	}
 
-	// Find and display the best model
-	bestbic := math.Inf(-1)
-	bestidx := 0
-	for i, m := range models {
-		if  m.Bic > bestbic {
-			bestbic = m.Bic
-			bestidx = i
-		}
-		fmt.Printf("%d: #centroids=%d BIC=%f\n", i, m.Numcentroids(), m.Bic)
+	fmt.Printf("\nBest fit:[#centroids=%d BIC=%f]\n", model.Numcentroids(), model.Bic)
+	for i, c := range model.Clusters {
+		fmt.Printf("cluster-%d: numpoints=%d variance=%f\n", i, c.Numpoints(), c.Variance)
 	}
 
-	fmt.Printf("\nBest fit:[ %d: #centroids=%d BIC=%f]\n",  bestidx, models[bestidx].Numcentroids(), models[bestidx].Bic)
-	bestm := models[bestidx]
-	for i, c := range bestm.Clusters {
-		fmt.Printf("cluster-%d: numpoints=%d  variance=%f\n", i, c.Numpoints(), c.Variance)
-	}
+	assignment := goxmeans.ExtractClusters(model)
+	fmt.Printf("Cluster Assignment: %v...\n", assignment[0:5])
 }

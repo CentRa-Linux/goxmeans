@@ -282,10 +282,19 @@ func (m Model) Numcentroids() int {
 	return c
 }
 
+func (m Model) Numpoints() int {
+	n := 0
+	for _, clust := range m.Clusters {
+		n += clust.Numpoints()
+	}
+	return n
+}
+
 // cluster models an individual cluster.
 type cluster struct {
 	Points   *matrix.DenseMatrix
 	Centroid *matrix.DenseMatrix
+	Matches  []int
 	Variance float64
 }
 
@@ -314,7 +323,7 @@ var centroids *matrix.DenseMatrix
 // the bisected model which consists of two centroids and whichever is greater
 // is committed to the set of clusters for this larger model k.
 //
-func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc CentroidChooser, measurer VectorMeasurer) ([]Model, map[string]error) {
+func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc CentroidChooser, measurer VectorMeasurer) ([]Model, error) {
 	var err error
 
 	// Uncomment logging code as well as the import statement above if you want simple logging to the elapsed
@@ -333,17 +342,13 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 			log.SetOutput(io.Writer(fp))
 	*/
 	if k > kmax {
-		m := make([]Model, 0)
-		e := map[string]error{
-			"k": errors.New(fmt.Sprintf("k must be <= kmax.  Received k=%d and kmax=%d.", k, kmax)),
-		}
-		return m, e
+		//m := make([]Model, 0)
+		return nil, errors.New(fmt.Sprintf("k must be <= kmax.  Received k=%d and kmax=%d.", k, kmax))
 	}
 
 	//	log.Printf("Start k=%d kmax=%d\n", k, kmax)
 
 	R, M := datapoints.GetSize()
-	errs := make(map[string]error)
 	runtime.GOMAXPROCS(numworkers)
 	models := make([]Model, 0)
 
@@ -368,8 +373,9 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 
 			centroids, err = centroids.AppendRow(cent)
 			if err != nil {
-				errs["ApppendRow"] = err
-				break
+				return nil, err
+				//errs["ApppendRow"] = err
+				//break
 			}
 			k++
 		} else {
@@ -378,7 +384,36 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 	}
 
 	//	log.Println("Finished")
-	return models, errs
+	return models, nil
+}
+
+// Run with informative defaults: DataCentroids, EuclideanDist and return the best model
+func BestXmeans(datapoints *matrix.DenseMatrix, k, kmax int) (Model, error) {
+	var model Model
+	var measurer EuclidDist
+	var cc DataCentroids
+
+	bisectcc := EllipseCentroids{1.0}
+
+	// generate initial centroids
+	centroids := cc.ChooseCentroids(datapoints, k)
+
+	models, err := Xmeans(datapoints, centroids, k, kmax, cc, bisectcc, measurer)
+	if err != nil {
+		return model, err
+	}
+
+	bestbic := math.Inf(-1)
+	bestidx := 0
+	for i, m := range models {
+		if m.Bic > bestbic {
+			bestbic = m.Bic
+			bestidx = i
+		}
+	}
+	model = models[bestidx]
+
+	return model, nil
 }
 
 // bisect takes a slice of clusters, bisects them attempting to create a better
@@ -518,7 +553,7 @@ func kmeans(datapoints, centroids *matrix.DenseMatrix, measurer VectorMeasurer) 
 			mean := pointsInCluster.MeanCols()
 			centroids.SetRowVector(mean, cent)
 
-			clust := cluster{pointsInCluster, mean, 0}
+			clust := cluster{pointsInCluster, mean, matches, 0}
 			clust.Variance = variance(clust, measurer)
 			clusters = append(clusters, clust)
 			idx++
@@ -527,6 +562,17 @@ func kmeans(datapoints, centroids *matrix.DenseMatrix, measurer VectorMeasurer) 
 	modelbic := calcbic(R, M, clusters)
 	model := Model{modelbic, clusters}
 	return model
+}
+
+func ExtractClusters(m Model) []int {
+	clusters := make([]int, m.Numpoints())
+
+	for i, mcluster := range m.Clusters {
+		for _, point := range mcluster.Matches {
+			clusters[point] = i
+		}
+	}
+	return clusters
 }
 
 // CentroidPoint stores the row number in the centroids matrix and
