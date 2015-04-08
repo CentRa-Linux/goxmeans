@@ -15,7 +15,7 @@ import (
 	"runtime/pprof"
 	"strconv"
 
-	"github.com/bobhancock/goxmeans"
+	"github.com/drewlanenga/goxmeans"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

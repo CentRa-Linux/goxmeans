@@ -33,7 +33,7 @@ import (
 	"strings"
 	//	"log"
 	//	"time"
-	"github.com/bobhancock/gomatrix/matrix"
+	"github.com/drewlanenga/gomatrix/matrix"
 )
 
 var numworkers = runtime.NumCPU()

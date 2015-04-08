@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/bobhancock/gomatrix/matrix"
+	"github.com/drewlanenga/gomatrix/matrix"
 )
 
 var DATAPOINTS = matrix.MakeDenseMatrix([]float64{3.0, 2.0,
