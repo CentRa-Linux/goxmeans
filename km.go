@@ -526,8 +526,6 @@ func kmeans(datapoints, centroids *matrix.DenseMatrix, measurer VectorMeasurer) 
 		go awaitPairPointCentroidCompletion(done, results)
 
 		clusterChanged = assessClusters(CentPointDist, results) // This blocks so that all the results can be processed
-		
-		bar2 := pb.StartNew(k)
 
 		// You have each data point grouped with a centroid,
 		for idx, cent := 0, 0; cent < k; cent++ {
@@ -535,18 +533,13 @@ func kmeans(datapoints, centroids *matrix.DenseMatrix, measurer VectorMeasurer) 
 			// Get the corresponding row vector from datapoints and place it in pointsInCluster.
 			r, _ := CentPointDist.GetSize()
 			matches := make([]int, 0)
-				
-			bar3 := pb.StartNew(k)
 
 			for i := 0; i < r; i++ {
 				v := CentPointDist.Get(i, 0)
 				if v == float64(cent) {
 					matches = append(matches, i)
 				}
-				bar3.Increment()
 			}
-			
-			bar3.Finish()
 
 			// It is possible that some centroids may have zero points, so there
 			// may not be any matches.
@@ -573,9 +566,7 @@ func kmeans(datapoints, centroids *matrix.DenseMatrix, measurer VectorMeasurer) 
 			clust.Variance = variance(clust, measurer)
 			clusters = append(clusters, clust)
 			idx++
-			bar2.Increment()
 		}
-		bar2.Finish()
 	}
 	modelbic := calcbic(R, M, clusters)
 	model := Model{modelbic, clusters}
