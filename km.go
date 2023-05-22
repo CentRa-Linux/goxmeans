@@ -527,7 +527,7 @@ func kmeans(datapoints, centroids *matrix.DenseMatrix, measurer VectorMeasurer) 
 
 		clusterChanged = assessClusters(CentPointDist, results) // This blocks so that all the results can be processed
 		
-		bar2 = pb.StartNew(k)
+		bar2 := pb.StartNew(k)
 
 		// You have each data point grouped with a centroid,
 		for idx, cent := 0, 0; cent < k; cent++ {
@@ -536,7 +536,7 @@ func kmeans(datapoints, centroids *matrix.DenseMatrix, measurer VectorMeasurer) 
 			r, _ := CentPointDist.GetSize()
 			matches := make([]int, 0)
 				
-			bar3 = pb.StartNew(k)
+			bar3 := pb.StartNew(k)
 
 			for i := 0; i < r; i++ {
 				v := CentPointDist.Get(i, 0)
