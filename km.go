@@ -34,6 +34,7 @@ import (
 	//	"log"
 	//	"time"
 	"github.com/drewlanenga/gomatrix/matrix"
+	"github.com/cheggaaa/pb"
 )
 
 var numworkers = runtime.NumCPU()
@@ -355,8 +356,10 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 	R, M := datapoints.GetSize()
 	runtime.GOMAXPROCS(numworkers)
 	models := make([]Model, 0)
+	bar := pb.StartNew(kmax)
 
 	for k <= kmax {
+		bar.Increment()
 		//		log.Printf("kmeans started k=%d\n", k)
 		model := kmeans(datapoints, centroids, measurer)
 
