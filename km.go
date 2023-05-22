@@ -49,7 +49,7 @@ func minimum(x int, ys ...int) int {
 }
 
 // Load loads a tab delimited text file of floats into a matrix.
-func Load(fname, sep string) (*matrix.DenseMatrix, error) {
+func Load(fname, sep string, flag bool) (*matrix.DenseMatrix, error) {
 	z := matrix.Zeros(1, 1)
 
 	fp, err := os.Open(fname)
@@ -81,6 +81,10 @@ func Load(fname, sep string) (*matrix.DenseMatrix, error) {
 
 		l1 := strings.TrimRight(line, "\n")
 		l := strings.Split(l1, sep)
+		
+		if flag == true {
+			l = l[1:]
+		}
 
 		// If each line does not have the same number of columns then error
 		if linenum == 0 {
