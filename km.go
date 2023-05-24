@@ -34,7 +34,6 @@ import (
 	//	"log"
 	//	"time"
 	"github.com/drewlanenga/gomatrix/matrix"
-	"github.com/cheggaaa/pb"
 )
 
 var numworkers = runtime.NumCPU()*4
@@ -329,7 +328,7 @@ var centroids *matrix.DenseMatrix
 // is committed to the set of clusters for this larger model k.
 //
 func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc CentroidChooser, measurer VectorMeasurer) ([]Model, error) {
-	var err error
+	var _ error
 
 	// Uncomment logging code as well as the import statement above if you want simple logging to the elapsed
 	// time between major events.
@@ -355,7 +354,7 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 
 	R, M := datapoints.GetSize()
 	runtime.GOMAXPROCS(numworkers)
-	models := make([]Model, 0)
+	_ := make([]Model, 0)
 
 	firstmodel := kmeans(datapoints, centroids, measurer)
 
