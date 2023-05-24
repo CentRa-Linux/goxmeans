@@ -354,7 +354,7 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 
 	R, M := datapoints.GetSize()
 	runtime.GOMAXPROCS(numworkers)
-	_ := make([]Model, 0)
+	//_ := make([]Model, 0)
 
 	firstmodel := kmeans(datapoints, centroids, measurer)
 
