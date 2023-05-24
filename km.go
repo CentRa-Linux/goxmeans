@@ -367,7 +367,7 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 	return []Model{model}, nil
 }
 
-func recursive(input_model Model, clusters []cluster, cc, measurer VectorMeasurer) Model {
+func recursive(input_model Model, clusters []cluster, cc, measurer VectorMeasurer) []cluster {
 	for _, c := range input_model.Clusters {
 		R, M := c.Points.GetSize()
 		prev_bic := calcbic(R, M, []cluster{c})
