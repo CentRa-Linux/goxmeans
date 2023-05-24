@@ -328,7 +328,7 @@ var centroids *matrix.DenseMatrix
 // the bisected model which consists of two centroids and whichever is greater
 // is committed to the set of clusters for this larger model k.
 //
-func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc EllipseCentroids, bisectcc CentroidChooser, measurer VectorMeasurer) ([]Model, error) {
+func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc CentroidChooser, measurer VectorMeasurer) ([]Model, error) {
 	var err error
 
 	// Uncomment logging code as well as the import statement above if you want simple logging to the elapsed
@@ -359,7 +359,7 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc EllipseCe
 
 	firstmodel := kmeans(datapoints, centroids, measurer)
 
-	clusters := recursive(firstmodel, []cluster{}, cc, measurer)
+	clusters := recursive(firstmodel, []cluster{}, bisectcc, measurer)
 
 	model := Model{calcbic(R, M, clusters), clusters}
 
@@ -367,7 +367,7 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc EllipseCe
 	return []Model{model}, nil
 }
 
-func recursive(input_model Model, clusters []cluster, cc EllipseCentroids, measurer VectorMeasurer) []cluster {
+func recursive(input_model Model, clusters []cluster, bisectcc CentroidChooser, measurer VectorMeasurer) []cluster {
 	for _, c := range input_model.Clusters {
 		R, M := c.Points.GetSize()
 		prev_bic := calcbic(R, M, []cluster{c})
@@ -377,7 +377,7 @@ func recursive(input_model Model, clusters []cluster, cc EllipseCentroids, measu
 			continue
 		}
 
-		centroids := cc.ChooseCentroids(c.Points, 2)
+		centroids := bisectcc.ChooseCentroids(c.Points, 2)
 		model := kmeans(c.Points, centroids, measurer)
 		bic := calcbic(R, M, model.Clusters)
 
