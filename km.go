@@ -359,33 +359,36 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 
 	firstmodel := kmeans(datapoints, centroids, measurer)
 
-	model := recursive(firstmodel, []cluster{}, measurer)
+	clusters := recursive(firstmodel, []cluster{}, cc, measurer)
+
+	model := Model{calcbic(R, M, clusters), clusters}
 
 	//	log.Println("Finished")
 	return []Model{model}, nil
 }
 
-func recursive(input_model Model, clusters []cluster, measurer VectorMeasurer) (Model, error) {
+func recursive(input_model Model, clusters []cluster, cc, measurer VectorMeasurer) Model {
 	for _, c := range input_model.Clusters {
 		R, M := c.Points.GetSize()
 		prev_bic := calcbic(R, M, []cluster{c})
 
-		if len(c.Points) < 3 {
+		if R < 3 {
 			clusters = append(clusters, c)
 			continue
 		}
 
 		centroids := cc.ChooseCentroids(c.Points, 2)
 		model := kmeans(c.Points, centroids, measurer)
-		bic := calcbic(R, M, model.Cluster)
+		bic := calcbic(R, M, model.Clusters)
 
 		if bic < prev_bic {
-			clusters = append(clusters, recursive(model, clusters, measurer))
+			clusters = append(clusters, recursive(model, clusters, cc, measurer))
 		} else {
 			clusters = append(clusters, c)
 		}
 	}
-	return Model{calcbic(R, M, clusters), clusters}
+
+	return clusters
 }
 
 // Run with informative defaults: DataCentroids, EuclideanDist and return the best model
