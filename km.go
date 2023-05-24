@@ -356,44 +356,36 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 	R, M := datapoints.GetSize()
 	runtime.GOMAXPROCS(numworkers)
 	models := make([]Model, 0)
-	bar := pb.StartNew(kmax)
 
-	for k <= kmax {
-		//		log.Printf("kmeans started k=%d\n", k)
-		model := kmeans(datapoints, centroids, measurer)
+	firstmodel := kmeans(datapoints, centroids, measurer)
 
-		// Bisect the returned clusters
-		//		log.Println("bisect started")
-		bimodel := bisect(model.Clusters, R, M, bisectcc, measurer)
-		numCentroids := len(bimodel.Clusters)
-		//		log.Printf("bisect returned %d clusters\n", numCentroids)
-		models = append(models, model)
-
-		var cent *matrix.DenseMatrix
-
-		if numCentroids <= kmax {
-			for rowexists := true; rowexists == true; {
-				cent = cc.ChooseCentroids(datapoints, 1)
-				rowexists = centroids.RowExists(cent)
-			}
-
-			centroids, err = centroids.AppendRow(cent)
-			if err != nil {
-				return nil, err
-				//errs["ApppendRow"] = err
-				//break
-			}
-			k++
-		} else {
-			k = numCentroids
-		}
-		bar.Increment()
-	}
-	
-	bar.Finish()
+	model := recursive(firstmodel, {}, measurer)
 
 	//	log.Println("Finished")
-	return models, nil
+	return []Model{model}, nil
+}
+
+func recursive(input_model Model, clusters []cluster, measurer VectorMeasurer) (Model, error) {
+	for _, c := range input_model.Clusters {
+		R, M := c.Points.GetSize()
+		prev_bic := calcbic(R, M, []cluster{c})
+
+		if len(c.Points) < 3 {
+			clusters = append(clusters, c)
+			continue
+		}
+
+		centroids := cc.ChooseCentroids(c.Points, 2)
+		model := kmeans(c.Points, centroids, measurer)
+		bic := calcbic(R, M, model.Cluster)
+
+		if bic < prev_bic {
+			clusters = append(clusters, recursive(model, clusters, measurer))
+		} else {
+			clusters = append(clusters, c)
+		}
+	}
+	return Model{calcbic(R, M, clusters), clusters}
 }
 
 // Run with informative defaults: DataCentroids, EuclideanDist and return the best model
