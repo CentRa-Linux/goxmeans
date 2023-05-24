@@ -359,7 +359,7 @@ func Xmeans(datapoints, centroids *matrix.DenseMatrix, k, kmax int, cc, bisectcc
 
 	firstmodel := kmeans(datapoints, centroids, measurer)
 
-	model := recursive(firstmodel, {}, measurer)
+	model := recursive(firstmodel, []cluster{}, measurer)
 
 	//	log.Println("Finished")
 	return []Model{model}, nil
