@@ -382,7 +382,7 @@ func recursive(input_model Model, clusters []cluster, bisectcc CentroidChooser, 
 		bic := calcbic(R, M, model.Clusters)
 
 		if bic < prev_bic {
-			clusters = append(clusters, recursive(model, clusters, cc, measurer)...)
+			clusters = append(clusters, recursive(model, clusters, bisectcc, measurer)...)
 		} else {
 			clusters = append(clusters, c)
 		}
